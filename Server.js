@@ -8,6 +8,7 @@ dotenv.config();
 
 const app = express();
 
+// Connect to MongoDB
 mongoose
   .connect(process.env.MONGO)
   .then(() => {
@@ -17,19 +18,24 @@ mongoose
     console.log(err.message);
   });
 
+// CORS setup for local and deployed frontend
 app.use(
   cors({
     origin: [
       "http://localhost:5173", // Local development
-      "https://alliancefxmarket.netlify.app/", // Replace with your deployed frontend URL
+      "https://alliancefxmarket.netlify.app", // Deployed frontend URL (no trailing slash)
     ],
     credentials: true,
   })
 );
 
+// Handle preflight requests for CORS
+app.options("*", cors());
+
+// Middleware
 app.use(express.json());
 
-// Root route
+// Root route for testing
 app.get("/", (req, res) => {
   res.send("Welcome to the server!");
 });
