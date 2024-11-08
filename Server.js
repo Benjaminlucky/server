@@ -17,21 +17,26 @@ mongoose
     console.log(err.message);
   });
 
-// CORS configuration
 app.use(
   cors({
     origin: [
       "http://localhost:5173", // Local development
-      "https://your-frontend-url.com", // Replace with your deployed frontend URL
+      "https://alliancefxmarket.netlify.app/", // Replace with your deployed frontend URL
     ],
     credentials: true,
   })
 );
 
 app.use(express.json());
+
+// Root route
+app.get("/", (req, res) => {
+  res.send("Welcome to the server!");
+});
+
+// User routes
 app.use("/user", userRoutes);
 
-// Bind to the dynamic port or default to 3000 for local development
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
