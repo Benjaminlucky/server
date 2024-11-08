@@ -11,24 +11,28 @@ const app = express();
 mongoose
   .connect(process.env.MONGO)
   .then(() => {
-    console.log("database connected");
+    console.log("Database connected");
   })
   .catch((err) => {
     console.log(err.message);
   });
 
-// After app is created
+// CORS configuration
 app.use(
   cors({
-    origin: ["http://localhost:5173"], // Allow both origins
+    origin: [
+      "http://localhost:5173", // Local development
+      "https://your-frontend-url.com", // Replace with your deployed frontend URL
+    ],
     credentials: true,
   })
 );
 
 app.use(express.json());
+app.use("/user", userRoutes);
 
-app.use("/user", userRoutes); // Matches the URL in Axios request
-
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+// Bind to the dynamic port or default to 3000 for local development
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
