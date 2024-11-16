@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import User from "../models/User.js";
 
 const registerUser = async (req, res) => {
@@ -21,7 +21,7 @@ const registerUser = async (req, res) => {
     }
 
     // Hash the password
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    //const hashedPassword = bcrypt.hashSync(password, 10);
     console.log("Hashed Password:", hashedPassword); // Check hashed password
     // Create and save the new user
     const newUser = new User({
@@ -30,7 +30,7 @@ const registerUser = async (req, res) => {
       email,
       phone,
       country,
-      password: hashedPassword, // Save the hashed password
+      password, // Save the hashed password
     });
 
     await newUser.save();
