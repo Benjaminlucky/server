@@ -65,7 +65,7 @@ export const loginUser = async (req, res) => {
     }
 
     // Login successful
-    res.status(200).json({ message: "Login successful" });
+    res.status(200).json({ success: true, message: "Login successful" });
   } catch (error) {
     console.error("Error during login:", error.message);
     res.status(500).json({ error: "Server error" });
