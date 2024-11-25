@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import userRoutes from "./routes/userRoutes.js";
-
+import authRouter from "./routes/authRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -50,8 +50,18 @@ app.get("/", (req, res) => {
   res.send("Welcome to the server!");
 });
 
-// User routes
+// Route to get user data by ID
+
+// User routes (non-authenticated routes like profile, settings)
 app.use("/user", userRoutes);
+
+// Authentication routes (signup, signin)
+app.use("/auth", authRouter); // Change /user to /auth for authentication routes
+
+app.get("/user/:userId", (req, res) => {
+  const userId = req.params.userId;
+  // Fetch user from database using userId
+});
 
 // Start the server
 const PORT = process.env.PORT || 3000;
