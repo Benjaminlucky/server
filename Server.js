@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import userRoutes from "./routes/userRoutes.js";
 import authRouter from "./routes/authRoutes.js";
+
 dotenv.config();
 
 const app = express();
@@ -23,24 +24,13 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173", // Local development
-      "https://alliancefxmarket.netlify.app", // Deployed frontend URL (no trailing slash)
+      "https://alliancefxmarket.netlify.app", // Deployed frontend URL
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed HTTP methods
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
     allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
-    credentials: true, // Allow cookies or authentication credentials
+    credentials: true, // Allow credentials (cookies or auth headers)
   })
 );
-
-// Handle preflight requests for CORS
-app.options("*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With"
-  );
-  res.sendStatus(204); // No Content
-});
 
 // Middleware to parse incoming requests
 app.use(express.json());
@@ -50,18 +40,11 @@ app.get("/", (req, res) => {
   res.send("Welcome to the server!");
 });
 
-// Route to get user data by ID
-
-// User routes (non-authenticated routes like profile, settings)
+// User routes
 app.use("/user", userRoutes);
 
-// Authentication routes (signup, signin)
-app.use("/auth", authRouter); // Change /user to /auth for authentication routes
-
-app.get("/user/:userId", (req, res) => {
-  const userId = req.params.userId;
-  // Fetch user from database using userId
-});
+// Authentication routes
+app.use("/auth", authRouter);
 
 // Start the server
 const PORT = process.env.PORT || 3000;

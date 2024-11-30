@@ -248,13 +248,18 @@ export const verifyUser = async (req, res) => {
 export const getUserStatus = async () => {
   const API_BASE_URL =
     window.location.origin === "http://localhost:5173"
-      ? "http://localhost:3000" // Development backend
-      : "https://alliancefxmarket.onrender.com"; // Production backend
+      ? "http://localhost:3000"
+      : "https://alliancefxmarket.onrender.com";
+
+  const token = localStorage.getItem("authToken"); // Retrieve token from localStorage
 
   try {
     const response = await fetch(`${API_BASE_URL}/user/status`, {
       method: "GET",
-      credentials: "include", // Include cookies if necessary
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
     });
 
     if (!response.ok) {
