@@ -1,7 +1,10 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import emailValidator from "email-validator";
 import { sendVerificationEmail } from "../utils/emailUtils.js"; // Ensure you import correctly
+import { authenticateToken } from "../middlewares/authMiddleware.js";
+import generateVerificationToken from "../utils/generateVerificationToken.js";
 
 // Register User
 export const registerUser = async (req, res) => {
@@ -70,37 +73,43 @@ export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Validate input
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Find the user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    // Generate a JWT token
+    // No check for user verification
+    // Remove this check to allow login regardless of verification status
+    // if (!user.isVerified) {
+    //   return res.status(403).json({
+    //     error: "Email not verified. Please verify your email to log in.",
+    //     unverified: true, // Optional flag for frontend logic
+    //   });
+    // }
+
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" } // 1 day expiration
+      { expiresIn: "1d" }
     );
 
-    // Send the token and user data back
     res.status(200).json({
       success: true,
       message: "Login successful",
-      user_id: user._id, // Store this in localStorage in frontend
+      user_id: user._id,
       fullName: user.fullName,
-      token, // Optionally store the token for authentication in future requests
+      email: user.email,
+      token,
+      emailVerified: user.isVerified, // Send email verification status to frontend
     });
   } catch (error) {
     console.error("Error during login:", error.message);
@@ -131,72 +140,6 @@ export const getUser = async (req, res) => {
 };
 
 // Resend Verification Email Controller
-export const resendVerificationEmail = async (req, res) => {
-  const { email } = req.body;
-
-  try {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // Check if the user is already verified
-    if (user.isVerified) {
-      return res.status(400).json({ error: "User is already verified" });
-    }
-
-    // Generate new verification token
-    const payload = { userId: user._id, email: user.email };
-    const verificationToken = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    // Update the user's verification token
-    user.verificationToken = verificationToken;
-    await user.save();
-
-    // Send new verification email
-    await sendVerificationEmail(user.email, verificationToken);
-
-    res.status(200).json({
-      success: true,
-      message: "Verification email resent successfully.",
-    });
-  } catch (error) {
-    console.error("Error resending verification email:", error.message);
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-export const verifyUser = async (req, res) => {
-  const { token } = req.query; // Token from the URL query parameter
-
-  try {
-    // Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Find the user by the decoded user ID
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // Check if the user is already verified
-    if (user.isVerified) {
-      return res.status(400).json({ message: "User is already verified" });
-    }
-
-    // Update the user's isVerified status to true
-    user.isVerified = true;
-    await user.save();
-
-    res.status(200).json({ message: "User verified successfully" });
-  } catch (error) {
-    console.error("Error during user verification:", error.message);
-    res.status(400).json({ error: "Invalid or expired token" });
-  }
-};
 
 export const verifyEmail = async (req, res) => {
   const { token } = req.query;
@@ -232,4 +175,81 @@ export const verifyEmail = async (req, res) => {
     console.error("Verification error:", error.message);
     res.status(400).json({ error: "Invalid or expired token" });
   }
+};
+
+// Resend verification email logic
+export const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.user; // Get the user's email from the JWT payload (from middleware)
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ error: "Email is already verified" });
+    }
+
+    // Generate the verification token and send the email
+    const verificationToken = generateVerificationToken(user);
+    await sendVerificationEmail(user.email, verificationToken);
+
+    res.status(200).json({
+      success: true,
+      message: "Verification email sent successfully.",
+    });
+  } catch (error) {
+    console.error("Error resending verification email:", error.message);
+    res.status(500).json({
+      error: "Error resending verification email. Please try again later.",
+    });
+  }
+};
+
+// Verify email using the token from the query params
+export const verifyUser = async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).json({ error: "Token is required" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify the token
+
+    const user = await User.findById(decoded.userId); // Retrieve user from DB
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ error: "Email already verified" });
+    }
+
+    user.isVerified = true; // Mark as verified
+    await user.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Email successfully verified." });
+  } catch (error) {
+    console.error("Token verification failed:", error);
+    res.status(400).json({ error: "Invalid or expired verification token." });
+  }
+};
+
+// Get the user status (verified or not)
+export const getUserStatus = (req, res) => {
+  const user = req.user; // Authenticated user (from middleware)
+  res.status(200).json({
+    success: true,
+    isVerified: user.isVerified,
+    message: user.isVerified ? "Email is verified." : "Email is not verified.",
+  });
 };

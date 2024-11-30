@@ -19,6 +19,18 @@ export const sendVerificationEmail = async (email, verificationToken) => {
     return result; // Optional, useful for testing or logging
   } catch (error) {
     console.error("Error sending verification email:", error.message);
+
+    // Handle Postmark-specific error
+    if (
+      error.message.includes("inactive") ||
+      error.message.includes("inactive addresses")
+    ) {
+      throw new Error(
+        "The email address is inactive or unable to receive emails."
+      );
+    }
+
+    // Default error handling
     throw new Error(`Error sending verification email: ${error.message}`);
   }
 };

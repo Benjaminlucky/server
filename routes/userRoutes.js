@@ -4,9 +4,10 @@ import {
   loginUser,
   getUser,
   resendVerificationEmail,
-  verifyEmail,
   verifyUser,
+  getUserStatus,
 } from "../controllers/userController.js";
+import { authenticateToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -14,8 +15,9 @@ const router = express.Router();
 router.post("/signup", registerUser);
 router.post("/signin", loginUser);
 router.get("/user/:userId", getUser);
-router.post("/resend-verification", resendVerificationEmail);
-router.get("/verify/:token", verifyUser); // Add the verification route
-router.get("/verify-email", verifyUser);
+router.post("/resend-verification", authenticateToken, resendVerificationEmail); // Resend verification
+router.get("/verify/:token", verifyUser); // Verify email using token
+router.get("/verify-email", verifyUser); // Same as above, could be used for UI redirection
+router.get("/status", authenticateToken, getUserStatus); // Get user's verification status
 
 export default router;
