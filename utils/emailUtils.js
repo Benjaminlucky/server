@@ -7,12 +7,20 @@ const client = new postmark.ServerClient(postmarkApiKey);
 
 export const sendVerificationEmail = async (email, verificationToken) => {
   try {
+    // Dynamically set the base URL based on the environment
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? "https://alliancefxmarket.onrender.com" // Replace with your production URL
+        : "http://localhost:3000"; // Use localhost in development
+
+    const verificationUrl = `${baseUrl}/user/verify-email?token=${verificationToken}`;
+
     const result = await client.sendEmail({
       From: "info@glamandessence.com", // Must be a verified sender
       To: email,
       Subject: "Please verify your email",
-      TextBody: `Click the link below to verify your email:\n\nhttp://localhost:3000/user/verify-email?token=${verificationToken}`,
-      HtmlBody: `<p>Click the link below to verify your email:</p><p><a href="http://localhost:3000/user/verify-email?token=${verificationToken}">Verify Email</a></p>`,
+      TextBody: `Click the link below to verify your email:\n\n${verificationUrl}`,
+      HtmlBody: `<p>Click the link below to verify your email:</p><p><a href="${verificationUrl}">Verify Email</a></p>`,
     });
 
     console.log("Verification email sent successfully:", result);
