@@ -17,7 +17,7 @@ router.post("/signin", loginUser);
 router.get("/user/:userId", getUser);
 router.post("/resend-verification", authenticateToken, resendVerificationEmail); // Resend verification
 router.get("/verify/:token", verifyUser); // Verify email using token
-router.get("/verify-email", authenticateToken, verifyUser); // Same as above, could be used for UI redirection
+router.get("/verify-email", verifyUser); // Same as above, could be used for UI redirection
 router.get("/status", authenticateToken, getUserStatus);
 
 export default router;
