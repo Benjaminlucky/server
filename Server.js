@@ -19,19 +19,19 @@ mongoose
     console.log(err.message);
   });
 
+const allowedOrigins = [
+  "http://localhost:5173", // For local development
+  "https://alliancefxmarket.netlify.app", // Production frontend
+];
 // CORS setup
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173", // Local development
-      "https://alliancefxmarket.netlify.app", // Deployed frontend URL
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
-    allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
-    credentials: true, // Allow credentials (cookies or auth headers)
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: "Authorization,Content-Type",
+    credentials: true, // If you're using cookies or authorization headers
   })
 );
-
 // Middleware to parse incoming requests
 app.use(express.json());
 
