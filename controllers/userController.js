@@ -245,31 +245,32 @@ export const verifyUser = async (req, res) => {
 };
 
 // Get the user status (verified or not)
-export const getUserStatus = async () => {
-  const API_BASE_URL =
-    window.location.origin === "http://localhost:5173"
-      ? "http://localhost:3000"
-      : "https://alliancefxmarket.onrender.com";
 
-  const token = localStorage.getItem("authToken"); // Retrieve token from localStorage
-
+export const getUserStatus = async (req, res) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/user/status`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    // Get the token from the authorization header
+    const token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+    if (!token) {
+      return res.status(401).json({ error: "Authentication token is missing" });
     }
 
-    const data = await response.json();
-    return data;
+    // Verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Using JWT_SECRET from environment
+
+    // Find the user by the decoded token's user ID
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Send the user's verification status
+    res.status(200).json({ isVerified: user.isVerified });
   } catch (error) {
     console.error("Error fetching user status:", error);
-    throw error;
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching the user status" });
   }
 };
