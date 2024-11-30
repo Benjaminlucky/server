@@ -245,11 +245,26 @@ export const verifyUser = async (req, res) => {
 };
 
 // Get the user status (verified or not)
-export const getUserStatus = (req, res) => {
-  const user = req.user; // Authenticated user (from middleware)
-  res.status(200).json({
-    success: true,
-    isVerified: user.isVerified,
-    message: user.isVerified ? "Email is verified." : "Email is not verified.",
-  });
+export const getUserStatus = async () => {
+  const API_BASE_URL =
+    window.location.origin === "http://localhost:5173"
+      ? "http://localhost:3000" // Development backend
+      : "https://alliancefxmarket.onrender.com"; // Production backend
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/user/status`, {
+      method: "GET",
+      credentials: "include", // Include cookies if necessary
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching user status:", error);
+    throw error;
+  }
 };
