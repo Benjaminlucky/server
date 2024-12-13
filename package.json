@@ -15,6 +15,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@reduxjs/toolkit": "^2.5.0",
     "argon2": "^0.41.1",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
@@ -25,8 +26,11 @@
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.0",
+    "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.16",
-    "postmark": "^4.0.5"
+    "postmark": "^4.0.5",
+    "react-redux": "^9.2.0",
+    "redux-persist": "^6.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
